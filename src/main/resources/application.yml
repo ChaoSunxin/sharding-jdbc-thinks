@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: sharding-jdbc-thinks
+  shardingsphere:
+    model:
+      type: Standalone
+      repository:
+        type: File
+        props:
+          path: .shardingsphere
+      overwrite: false
+    datasource:
+      names: db0,db1
+      db0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: org.postgresql.Driver
+        jdbc-url: jdbc:postgresql://localhost:5432/db0
+        username: test_user
+        password: root
+      db1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: org.postgresql.Driver
+        jdbc-url: jdbc:postgresql://localhost:5432/db1
+        username: test_user
+        password: root
+    # 分片规则
+    rules:
+      sharding:
+        # 分片算法
+        sharding-algorithms:
+          database-inline:
+            type: INLINE
+            props:
+              # 我数据库user_id设置的是varchar类型，所以这里转换一下类型好进行取模计算。参考groovy语法
+              algorithm-expression: db$->{user_id.toInteger() % 2}
+          table-inline:
+            type: INLINE
+            props:
+              algorithm-expression: t_order_$->{order_id.toInteger() % 3}
+        tables:
+          # 逻辑表名称
+          t_order:
+            # 实际数据节点 行表达标识符 ${} $->{}两种方式
+            actual-data-nodes: db${0..1}.t_order_${0..2}
+            # 分库分片策略，单分片键策略
+            database-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: database-inline
+            # 分表策略，同分库策略
+            table-strategy:
+              standard:
+                sharding-column: order_id
+                sharding-algorithm-name: table-inline
+    props:
+      sql-show: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect

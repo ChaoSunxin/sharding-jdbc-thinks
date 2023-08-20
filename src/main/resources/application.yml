@@ -37,6 +37,14 @@ spring:
             type: INLINE
             props:
               algorithm-expression: t_order_$->{order_id.toInteger() % 3}
+          database-inline-order-item:
+            type: INLINE
+            props:
+              algorithm-expression: db$->{order_id.toInteger() % 2}
+          table-inline-order-item:
+            type: INLINE
+            props:
+              algorithm-expression: t_order_item_$->{order_id.toInteger() % 3}
         tables:
           # 逻辑表名称
           t_order:
@@ -52,6 +60,18 @@ spring:
               standard:
                 sharding-column: order_id
                 sharding-algorithm-name: table-inline
+          t_order_item:
+            # 实际数据节点 行表达标识符 ${} $->{}两种方式
+            actual-data-nodes: db${0..1}.t_order_item_${0..2}
+            database-strategy:
+              standard:
+                sharding-column: order_id
+                sharding-algorithm-name: database-inline-order-item
+            # 分表策略，同分库策略
+            table-strategy:
+              standard:
+                sharding-column: order_id
+                sharding-algorithm-name: table-inline-order-item
     props:
       sql-show: true
   jpa:

@@ -72,6 +72,8 @@ spring:
               standard:
                 sharding-column: order_id
                 sharding-algorithm-name: table-inline-order-item
+        binding-tables:
+          - t_order,t_order_item
     props:
       sql-show: true
   jpa:
